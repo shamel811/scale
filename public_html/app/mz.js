@@ -94,7 +94,7 @@
     document.title = 'Scale Business — ' + (MZ.me.tenant ? MZ.me.tenant.name : '');
     $('#root').innerHTML = '<div class="load">جارٍ التحميل…</div>';
     const s = document.createElement('script');
-    s.src = 'app.js?v=' + (window.MZ_VER || '1');
+    s.src = 'app.js?v=' + (window.MZ_VER || '3');
     document.body.appendChild(s);
     if (new URLSearchParams(location.search).get('paid')) confirmPayment();
   }

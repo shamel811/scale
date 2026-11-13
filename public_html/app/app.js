@@ -16,7 +16,7 @@ const PAYS=['نقدي','بطاقة','تحويل','آجل'];
 const uid_=()=>Math.random().toString(36).slice(2,10);
 
 const S={menu:[],raws:[],recipes:{},customers:[],salesBy:{},purchases:{},expenses:{},payments:{},staff:[],names:{},ready:{},err:null};
-const ui={tab:'home',preset:'all',from:'',to:'',stock:'raw',q:'',cust:null,cat:'items',recItem:'',edit:null,sq:'',sqs:''};
+const ui={tab:'home',preset:'all',from:'',to:'',stock:'raw',q:'',cust:null,cat:'items',recItem:'',edit:null,sq:'',sqs:'',an:'kpi'};
 const F={
   sale:{date:today(),cust:'',pay:'نقدي',note:'',cart:[],cat:'الكل',q:''},
   purch:{date:today(),sup:'',inv:'',pay:'',rows:[{kind:'item',code:'',qty:'',total:''}]},
@@ -438,6 +438,122 @@ function vReports(M){
   '<div class="grid g2"><div class="card"><header><h3>حسب التصنيف</h3></header>'+tbl(D.cat,'التصنيف')+'</div><div class="card"><header><h3>حسب البائع</h3></header><div class="tbl"><table><thead><tr><th>البائع</th><th class="n">حركات</th><th class="n">المبيعات</th></tr></thead><tbody>'+D.sel.map(x=>'<tr><td>'+esc(x.n)+'</td><td class="n">'+x.k+'</td><td class="n">'+money(x.t)+'</td></tr>').join('')+'</tbody></table></div></div></div>'+
   '<div class="card"><header><h3>ربحية الأصناف</h3><span class="sp"></span><button class="btn sm" data-act="exp-items">تصدير CSV</button><button class="btn sm" data-act="exp-sales">تصدير المبيعات CSV</button></header>'+tbl(D.it,'الصنف')+'</div>';
 }
+/* ---------- analytics (مؤشرات الأداء / تحليل الأيام / تحليل الأصناف / ربح المبيعات) ---------- */
+const AN={hi:50,ok:25,lim:500};
+try{Object.assign(AN,JSON.parse(localStorage.getItem('mz_an')||'{}'))}catch(e){}
+const pct=v=>v==null||!isFinite(v)?'<span class="muted">—</span>':(v*100).toFixed(1)+'%';
+const addDays=(s,n)=>{const p=s.split('-');const d=new Date(+p[0],+p[1]-1,+p[2]);d.setDate(d.getDate()+n);return isoDate(d)};
+const dayDiff=(a,b)=>{const x=a.split('-'),y=b.split('-');return Math.round((new Date(+y[0],+y[1]-1,+y[2])-new Date(+x[0],+x[1]-1,+x[2]))/864e5)};
+function rateItem(x){
+  if(!(x.q>0))return ['راكد','gray'];
+  if(x.c===0)return ['تكلفة غير مسجلة','warn'];
+  const m=x.t?(x.t-x.c)/x.t:0;
+  if(m<0)return ['يباع بخسارة','bad'];
+  if(m*100>=AN.hi)return ['هامش ممتاز','good'];
+  if(m*100>=AN.ok)return ['هامش مقبول',''];
+  return ['هامش ضعيف','warn'];
+}
+function analytics(M,R){
+  const K=kpis(M,R);const by={};const g=d=>by[d]||(by[d]={d,sales:0,cogs:0,exp:0,n:0});
+  /* ربح كل سطر بيع */
+  const lines=K.ss.map(s=>{const uc=M.unitCost(s.code),q=+s.qty||0,cogs=q*uc;const o=g(s.date);o.sales+=s.total;o.cogs+=cogs;if(s.total>0)o.n++;
+    return {s,uc,cogs,prof:s.total-cogs,nocost:uc===0}});
+  M.exp.filter(e=>R.inr(e.date)).forEach(e=>{g(e.date).exp+=+e.amount||0});
+  /* أيام متصلة من أول حركة إلى آخر حركة */
+  const ks=Object.keys(by).sort();const days=[];
+  if(ks.length){let d=ks[0];const end=ks[ks.length-1];let guard=0;while(d<=end&&guard++<800){days.push(by[d]||{d,sales:0,cogs:0,exp:0,n:0});d=addDays(d,1)}}
+  let cum=0;
+  days.forEach((o,i)=>{o.prof=o.sales-o.cogs;o.net=o.prof-o.exp;o.margin=o.sales?o.prof/o.sales:null;o.avg=o.n?o.sales/o.n:null;
+    const p=i?days[i-1]:null;o.growth=p&&p.sales>0&&o.sales>0?(o.sales-p.sales)/p.sales:null;
+    const w=days.slice(Math.max(0,i-6),i+1).filter(x=>x.sales>0);o.ma=i>=6&&w.length?w.reduce((a,x)=>a+x.sales,0)/w.length:null;
+    cum+=o.sales;o.cum=cum});
+  const sell=days.filter(o=>o.sales>0);const nSell=sell.length;const avgDay=nSell?K.sales/nSell:0;
+  const txn=days.reduce((a,o)=>a+o.n,0);
+  const best=sell.slice().sort((a,b)=>b.sales-a.sales)[0]||null;
+  const gr=days.filter(o=>o.growth!=null);const avgGrowth=gr.length?gr.reduce((a,o)=>a+o.growth,0)/gr.length:null;
+  /* التوقع حتى نهاية شهر آخر يوم بيع */
+  let fc=null;
+  if(nSell){const last=sell[nSell-1].d;const p=last.split('-');const mEnd=isoDate(new Date(+p[0],+p[1],0));const rem=Math.max(0,dayDiff(last,mEnd));
+    const mtd=days.filter(o=>o.d.slice(0,7)===last.slice(0,7)).reduce((a,o)=>a+o.sales,0);
+    let lin=null;
+    if(nSell>=3&&rem>0){const xs=sell.map(o=>dayDiff(sell[0].d,o.d)),ys=sell.map(o=>o.sales);const mx=xs.reduce((a,x)=>a+x,0)/nSell,my=ys.reduce((a,y)=>a+y,0)/nSell;
+      let sxy=0,sxx=0;xs.forEach((x,i)=>{sxy+=(x-mx)*(ys[i]-my);sxx+=(x-mx)*(x-mx)});const b=sxx?sxy/sxx:0,a0=my-b*mx;const x0=dayDiff(sell[0].d,last);
+      lin=0;for(let k=1;k<=rem;k++)lin+=Math.max(0,a0+b*(x0+k))}
+    fc={last,mEnd,rem,mtd,avgRest:avgDay*rem,total:mtd+avgDay*rem,lin,linTotal:lin==null?null:mtd+lin}}
+  /* الأصناف */
+  const im={};lines.forEach(l=>{const c=l.s.code;const o=im[c]||(im[c]={code:c,n:itemName(M,c),q:0,t:0,c:0,k:0});o.q+=+l.s.qty||0;o.t+=l.s.total;o.c+=l.cogs;if(l.s.total>0)o.k++});
+  S.menu.forEach(i=>{if(!im[i.code])im[i.code]={code:i.code,n:i.name,q:0,t:0,c:0,k:0}});
+  const bal=new Map(M.itemStock.map(x=>[x.i.code,x.bal]));
+  const items=Object.values(im).sort((a,b)=>b.t-a.t||(a.n<b.n?-1:1));
+  items.forEach((x,i)=>{const it=M.itemMap.get(x.code);x.cat=(it&&it.cat)||'غير مصنف';x.prof=x.t-x.c;x.margin=x.t?x.prof/x.t:null;x.share=K.sales&&x.t?x.t/K.sales:null;x.avg=x.q?x.t/x.q:null;
+    x.rank=x.t>0?i+1:null;x.bal=bal.has(x.code)?bal.get(x.code):null;x.cover=x.q>0&&x.bal>0&&nSell?x.bal/(x.q/nSell):null;x.rate=rateItem(x)});
+  const pr=items.filter(x=>x.t>0).slice().sort((a,b)=>b.prof-a.prof);pr.forEach((x,i)=>{x.prank=i+1});
+  /* الدفع والمصروفات والآجل */
+  const pay={};lines.forEach(l=>{const k=l.s.pay||'غير محدد';const o=pay[k]||(pay[k]={n:k,t:0,k:0});o.t+=l.s.total;if(l.s.total>0)o.k++});
+  const ex={};M.exp.filter(e=>R.inr(e.date)).forEach(e=>{const k=(e.type||'').trim()||'غير محدد';ex[k]=(ex[k]||0)+(+e.amount||0)});
+  const credit=(pay['آجل']||{t:0}).t;const nocost=lines.filter(l=>l.nocost).reduce((a,l)=>a+l.s.total,0);
+  return {K,lines,days,items,nSell,avgDay,txn,avgTxn:txn?K.sales/txn:0,best,avgGrowth,fc,credit,nocost,
+    pays:Object.values(pay).sort((a,b)=>b.t-a.t),exps:Object.entries(ex).map(e=>({n:e[0],t:e[1]})).sort((a,b)=>b.t-a.t)};
+}
+function anKpi(M,D){
+  const K=D.K,f=D.fc;const kp=(l,v,s,c)=>'<div class="kpi '+(c||'')+'"><div class="l">'+l+'</div><div class="v">'+N(v)+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
+  const owed=M.credit.filter(c=>c.bal>0);const tb=owed.reduce((a,c)=>a+c.bal,0);
+  const bars=(rows,tot)=>{const mx=rows[0]?rows[0].t:1;return rows.map(x=>'<div class="r"><span>'+esc(x.n)+'</span><span class="t"><i style="width:'+(mx?x.t/mx*100:0)+'%"></i></span><span>'+N(money(x.t))+' <span class="muted sm">'+(tot?(x.t/tot*100).toFixed(1)+'%':'')+'</span></span></div>').join('')||'<div class="empty">لا توجد بيانات</div>'};
+  return '<div class="kpis">'+
+   kp('إجمالي المبيعات',money(K.sales),D.nSell+' يوم بيع، '+D.txn+' حركة','main')+
+   kp('مجمل الربح',money(K.prof),'هامش '+pct(K.margin))+
+   kp('صافي الربح التشغيلي','<span class="'+(K.net<0?'neg':'')+'">'+money(K.net)+'</span>','هامش '+pct(K.sales?K.net/K.sales:null))+
+   kp('المصروفات',money(K.expn),pct(K.sales?K.expn/K.sales:null)+' من المبيعات')+
+   kp('متوسط يوم البيع',money(D.avgDay),'متوسط قيمة الحركة '+money(D.avgTxn))+
+   kp('أعلى يوم مبيعات',D.best?money(D.best.sales):'—',D.best?fd(D.best.d):'')+
+   kp('متوسط النمو اليومي',pct(D.avgGrowth),'بين الأيام المتتالية التي بها مبيعات')+
+   kp('مبيعات آجلة',money(D.credit),pct(K.sales?D.credit/K.sales:null)+' من المبيعات')+
+  '</div>'+
+  (D.nocost>0?'<div class="alert">مبيعات بقيمة '+money(D.nocost)+' ('+pct(K.sales?D.nocost/K.sales:null)+' من المبيعات) لأصناف بلا تكلفة مسجلة، فيظهر هامشها 100%. سجّل تكلفتها من المشتريات أو الوصفات لتصح الأرباح.</div>':'')+
+  (f?'<div class="card"><header><h3>التوقع حتى نهاية الشهر ('+fd(f.mEnd)+')</h3></header>'+(f.rem?'<div class="tbl"><table><tbody>'+
+    '<tr><td>مبيعات الشهر حتى آخر يوم مسجل ('+fd(f.last)+')</td><td class="n">'+money(f.mtd)+'</td></tr>'+
+    '<tr><td>الأيام المتبقية</td><td class="n">'+f.rem+'</td></tr>'+
+    '<tr><td>متوقع للأيام المتبقية بمتوسط يوم البيع</td><td class="n">'+money(f.avgRest)+'</td></tr>'+
+    '<tr><td class="b">إجمالي متوقع بمتوسط يوم البيع</td><td class="n b">'+money(f.total)+'</td></tr>'+
+    '<tr><td>إجمالي متوقع بالاتجاه الخطي</td><td class="n">'+(f.linTotal==null?'<span class="muted">يحتاج 3 أيام بيع على الأقل</span>':money(f.linTotal))+'</td></tr></tbody></table></div>'+
+    '<p class="sm muted">التوقع بالمتوسط يفترض البيع كل يوم متبقٍ فهو حد أعلى. الاتجاه الخطي يتأثر بشدة حين تكون الأيام المسجلة قليلة.</p>':'<div class="empty">لا توجد أيام متبقية في الشهر بعد آخر يوم مسجل.</div>')+'</div>':'')+
+  '<div class="grid g2"><div class="card"><header><h3>طرق الدفع</h3></header><div class="bars">'+bars(D.pays,K.sales)+'</div></div>'+
+   '<div class="card"><header><h3>المصروفات حسب النوع</h3></header><div class="bars">'+bars(D.exps,K.expn)+'</div></div></div>'+
+  '<div class="grid g2"><div class="card"><header><h3>أعلى 10 أصناف إيراداً</h3></header><div class="tbl"><table><thead><tr><th>#</th><th>الصنف</th><th class="n">الإيراد</th><th class="n">الربح</th><th class="n">الهامش</th></tr></thead><tbody>'+
+    (D.items.filter(x=>x.t>0).slice(0,10).map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.n)+'</td><td class="n">'+money(x.t)+'</td><td class="n '+(x.prof<0?'neg':'')+'">'+money(x.prof)+'</td><td class="n">'+pct(x.margin)+'</td></tr>').join('')||'<tr><td colspan="5" class="muted">لا مبيعات</td></tr>')+'</tbody></table></div></div>'+
+   '<div class="card"><header><h3>أرصدة عملاء الآجل</h3><span class="muted sm">كل الفترات</span></header><div class="tbl" style="max-height:420px"><table><thead><tr><th>#</th><th>العميل</th><th class="n">المتبقي</th><th class="n">الحصة</th><th>الحالة</th></tr></thead><tbody>'+
+    (owed.map((c,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(c.name||'—')+'</td><td class="n b">'+money(c.bal)+'</td><td class="n">'+pct(tb?c.bal/tb:null)+'</td><td>'+(c.bal>AN.lim?'<span class="chip bad">تجاوز حد الائتمان</span>':'<span class="chip good">ضمن الحد</span>')+'</td></tr>').join('')||'<tr><td colspan="5" class="muted">لا أرصدة مستحقة</td></tr>')+'</tbody></table></div></div></div>'+
+  '<div class="card"><header><h3>حدود التقييم</h3></header><div class="row">'+
+   '<div class="field" style="flex:0 0 170px"><label for="anh">حد الهامش الممتاز %</label><input id="anh" type="number" min="0" max="100" step="any" inputmode="decimal" data-an="hi" value="'+esc(AN.hi)+'"></div>'+
+   '<div class="field" style="flex:0 0 170px"><label for="ano">حد الهامش المقبول %</label><input id="ano" type="number" min="0" max="100" step="any" inputmode="decimal" data-an="ok" value="'+esc(AN.ok)+'"></div>'+
+   '<div class="field" style="flex:0 0 170px"><label for="anl">حد ائتمان العميل (جنيه)</label><input id="anl" type="number" min="0" step="any" inputmode="decimal" data-an="lim" value="'+esc(AN.lim)+'"></div></div>'+
+   '<p class="sm muted">تُستخدم في تقييم الأصناف وحالة ائتمان العملاء، وتُحفظ على هذا الجهاز.</p></div>';
+}
+function anDays(D){
+  const c=v=>'<td class="n">'+(v?money(v):'<span class="muted">—</span>')+'</td>';
+  const rows=D.days.slice().reverse();
+  return '<div class="card"><header><h3>تحليل الأيام</h3><span class="sp"></span><button class="btn sm" data-act="exp-an-days">تصدير CSV</button></header><div class="tbl" style="max-height:560px"><table><thead><tr><th>التاريخ</th><th class="n">المبيعات</th><th class="n">تكلفة المباع</th><th class="n">مجمل الربح</th><th class="n">الهامش</th><th class="n">المصروفات</th><th class="n">صافي الربح</th><th class="n">حركات</th><th class="n">متوسط الحركة</th><th class="n">النمو</th><th class="n">متوسط ٧ أيام</th><th class="n">تراكمي</th></tr></thead><tbody>'+
+   (rows.map(o=>'<tr><td>'+fd(o.d)+'</td>'+c(o.sales)+c(o.cogs)+c(o.prof)+'<td class="n">'+pct(o.margin)+'</td>'+c(o.exp)+'<td class="n b '+(o.net<0?'neg':'')+'">'+money(o.net)+'</td><td class="n">'+(o.n||'<span class="muted">—</span>')+'</td>'+c(o.avg)+'<td class="n '+(o.growth<0?'neg':'')+'">'+pct(o.growth)+'</td>'+c(o.ma)+'<td class="n">'+money(o.cum)+'</td></tr>').join('')||'<tr><td colspan="12" class="muted">لا توجد بيانات في هذه الفترة</td></tr>')+
+   '</tbody></table></div><p class="sm muted">النمو يقارن اليوم باليوم السابق له مباشرة ويُترك فارغاً إذا كان أحدهما بلا مبيعات. المتوسط المتحرك يتجاهل الأيام التي بلا مبيعات.</p></div>';
+}
+function anItems(D){
+  return '<div class="card"><header><h3>تحليل الأصناف</h3><span class="sp"></span><button class="btn sm" data-act="exp-an-items">تصدير CSV</button></header><div class="tbl" style="max-height:560px"><table><thead><tr><th>#</th><th>الصنف</th><th>التصنيف</th><th class="n">الكمية</th><th class="n">الإيراد</th><th class="n">التكلفة</th><th class="n">الربح</th><th class="n">الهامش</th><th class="n">الحصة</th><th class="n">حركات</th><th class="n">متوسط السعر</th><th class="n">ترتيب الربح</th><th class="n">الرصيد</th><th class="n">أيام التغطية</th><th>التقييم</th></tr></thead><tbody>'+
+   (D.items.map(x=>'<tr><td>'+(x.rank||'<span class="muted">—</span>')+'</td><td>'+esc(x.n)+'</td><td class="sm muted">'+esc(x.cat)+'</td><td class="n">'+qn(x.q)+'</td><td class="n">'+money(x.t)+'</td><td class="n">'+money(x.c)+'</td><td class="n b '+(x.prof<0?'neg':'')+'">'+money(x.prof)+'</td><td class="n">'+pct(x.margin)+'</td><td class="n">'+pct(x.share)+'</td><td class="n">'+x.k+'</td><td class="n">'+(x.avg==null?'<span class="muted">—</span>':money(x.avg))+'</td><td class="n">'+(x.prank||'<span class="muted">—</span>')+'</td><td class="n '+(x.bal<0?'neg':'')+'">'+(x.bal==null?'<span class="muted">—</span>':qn(x.bal))+'</td><td class="n">'+(x.cover==null?'<span class="muted">—</span>':nf.format(Math.round(x.cover*10)/10))+'</td><td><span class="chip '+x.rate[1]+'">'+x.rate[0]+'</span></td></tr>').join('')||'<tr><td colspan="15" class="muted">لا توجد أصناف</td></tr>')+
+   '</tbody></table></div><p class="sm muted">أيام التغطية = الرصيد الحالي ÷ متوسط البيع في يوم البيع. الرصيد يظهر للأصناف التي لها مشتريات أو رصيد افتتاحي فقط.</p></div>';
+}
+function anLines(M,D){
+  const MAX=300;const rows=D.lines.slice(0,MAX);
+  return '<div class="card"><header><h3>ربح المبيعات (كل سطر بيع)</h3><span class="sp"></span><button class="btn sm" data-act="exp-an-lines">تصدير CSV</button></header><div class="tbl" style="max-height:560px"><table><thead><tr><th>التاريخ</th><th>الصنف</th><th class="n">الكمية</th><th class="n">الإيراد</th><th class="n">تكلفة الوحدة</th><th class="n">تكلفة المباع</th><th class="n">الربح</th><th class="n">الهامش</th><th>الدفع</th><th>العميل</th><th>حالة التكلفة</th></tr></thead><tbody>'+
+   (rows.map(l=>'<tr><td>'+fd(l.s.date)+'</td><td>'+esc(itemName(M,l.s.code))+'</td><td class="n">'+qn(l.s.qty)+'</td><td class="n">'+money(l.s.total)+'</td><td class="n">'+money(l.uc)+'</td><td class="n">'+money(l.cogs)+'</td><td class="n b '+(l.prof<0?'neg':'')+'">'+money(l.prof)+'</td><td class="n">'+pct(l.s.total?l.prof/l.s.total:null)+'</td><td>'+esc(l.s.pay||'غير محدد')+'</td><td>'+esc(l.s.cust||'')+'</td><td>'+(l.nocost?'<span class="chip warn">بدون تكلفة مسجلة</span>':'<span class="chip good">مكتمل</span>')+'</td></tr>').join('')||'<tr><td colspan="11" class="muted">لا مبيعات في هذه الفترة</td></tr>')+
+   '</tbody></table></div>'+(D.lines.length>MAX?'<p class="sm muted">يُعرض أحدث '+MAX+' سطر من '+D.lines.length+'. التصدير يشمل كل السطور.</p>':'')+'</div>';
+}
+const ANT=[['kpi','مؤشرات الأداء'],['days','تحليل الأيام'],['items','تحليل الأصناف'],['lines','ربح المبيعات']];
+function vAnalytics(M){
+  const R=range(M),D=analytics(M,R);const t=ANT.some(x=>x[0]===ui.an)?ui.an:'kpi';
+  return '<div class="row" style="align-items:center"><h2>التحليلات</h2><span class="sp"></span>'+rangeBar(M,R)+'</div>'+
+   '<div class="row"><div class="seg" role="group" aria-label="نوع التحليل">'+ANT.map(x=>'<button data-act="an" data-v="'+x[0]+'" aria-pressed="'+(t===x[0])+'">'+x[1]+'</button>').join('')+'</div></div>'+
+   (t==='days'?anDays(D):t==='items'?anItems(D):t==='lines'?anLines(M,D):anKpi(M,D));
+}
 function vSellers(M){
   const ids=[...new Set([...S.staff,uid].filter(Boolean))];
   const td=today();
@@ -471,7 +587,7 @@ function vImport(M){
 }
 
 /* ---------- shell ---------- */
-const TABS=[['home','لوحة التحكم'],['sales','المبيعات'],['purch','المشتريات'],['exp','المصروفات'],['credit','الآجل'],['stock','المخزون'],['daily','الملخص اليومي'],['reports','التقارير'],['cat','الأصناف والوصفات'],['sellers','الفريق والبائعون'],['import','استيراد'],['account','الاشتراك']];
+const TABS=[['home','لوحة التحكم'],['sales','المبيعات'],['purch','المشتريات'],['exp','المصروفات'],['credit','الآجل'],['stock','المخزون'],['daily','الملخص اليومي'],['reports','التقارير'],['analytics','التحليلات'],['cat','الأصناف والوصفات'],['sellers','الفريق والبائعون'],['import','استيراد'],['account','الاشتراك']];
 function render(){
   const root=$('#root');
   if(!db){root.innerHTML='<div class="card empty" style="margin-top:24px">هذا التطبيق يحتاج تسجيل الدخول وصلاحية الكتابة. افتح الرابط من حسابك أو اطلب دعوة من المدير.</div>';return}
@@ -482,7 +598,7 @@ function render(){
   let main='';
   if(role==='viewer')main='<div class="card empty">حسابك يسمح بالاطلاع فقط. اطلب من المدير رفع صلاحيتك إلى «مساهم» لتسجيل المبيعات.</div>';
   else if(!mgr)main=vCashier(M);
-  else main=({home:vHome,sales:vSales,purch:vPurch,exp:vExp,credit:vCredit,stock:vStock,daily:vDaily,reports:vReports,sellers:vSellers,import:vImport,cat:vCatalog,account:()=>MZ.accountView()}[ui.tab]||vHome)(M);
+  else main=({home:vHome,sales:vSales,purch:vPurch,exp:vExp,credit:vCredit,stock:vStock,daily:vDaily,reports:vReports,analytics:vAnalytics,sellers:vSellers,import:vImport,cat:vCatalog,account:()=>MZ.accountView()}[ui.tab]||vHome)(M);
   if(MZ.locked())main=mgr?MZ.accountView():MZ.lockedMsg();
   else if(mgr&&ui.tab==='home'&&!S.menu.length&&S.ready['menu/items'])main=MZ.onboard()+main;
   const slow=S.slow&&!S.ready['menu/items']?'<div class="alert" style="margin-top:16px">تعذر الوصول إلى البيانات حتى الآن. قد تكون الأرقام غير محدثة.</div>':'';
@@ -495,6 +611,7 @@ function render(){
 const A={
   tab:e=>{ui.tab=e.dataset.v;ui.edit=null;render();window.scrollTo(0,0)},
   preset:e=>{ui.preset=e.dataset.v;render()},
+  an:e=>{ui.an=e.dataset.v;render()},
   cat:e=>{F.sale.cat=e.dataset.v;render()},
   add:e=>{const c=e.dataset.v;const it=S.menu.find(i=>i.code===c);if(!it)return;const l=F.sale.cart.find(x=>x.code===c&&+x.price===+it.price);if(l)l.qty=(+l.qty||0)+1;else F.sale.cart.push({code:c,qty:1,price:it.price});render()},
   rm:e=>{F.sale.cart.splice(+e.dataset.i,1);render()},
@@ -559,6 +676,9 @@ const A={
     M.purch.filter(p=>R.inr(p.date)).forEach(p=>{if(p.pay&&p.pay!=='آجل')g(p.date).pur+=+p.total||0});
     const rows=Object.values(days).sort((a,b)=>a.d<b.d?-1:1).map(o=>[o.d,o.cash,o.card,o.tr,o.cr,o.u,o.sales,o.pays,o.exp,o.pur,o.cash+o.card+o.tr+o.pays-o.exp-o.pur]);
     saveCsv('الملخص-اليومي.csv',[['التاريخ','نقدي','بطاقة','تحويل','آجل','غير محدد','إجمالي المبيعات','سداد آجل','مصروفات','مشتريات مدفوعة','صافي النقدية'],...rows])},
+  'exp-an-days':()=>{const M=model(),D=analytics(M,range(M));saveCsv('تحليل-الأيام.csv',[['التاريخ','المبيعات','تكلفة المباع','مجمل الربح','الهامش','المصروفات','صافي الربح','عدد الحركات','متوسط الحركة','النمو','متوسط 7 أيام','تراكمي'],...D.days.map(o=>[o.d,o.sales,o.cogs,o.prof,o.margin==null?'':o.margin,o.exp,o.net,o.n,o.avg==null?'':o.avg,o.growth==null?'':o.growth,o.ma==null?'':o.ma,o.cum])])},
+  'exp-an-items':()=>{const M=model(),D=analytics(M,range(M));saveCsv('تحليل-الأصناف.csv',[['ترتيب الإيراد','الكود','الصنف','التصنيف','الكمية','الإيراد','التكلفة','الربح','الهامش','الحصة','عدد الحركات','متوسط السعر','ترتيب الربح','الرصيد','أيام التغطية','التقييم'],...D.items.map(x=>[x.rank||'',x.code,x.n,x.cat,x.q,x.t,x.c,x.prof,x.margin==null?'':x.margin,x.share==null?'':x.share,x.k,x.avg==null?'':x.avg,x.prank||'',x.bal==null?'':x.bal,x.cover==null?'':x.cover,x.rate[0]])])},
+  'exp-an-lines':()=>{const M=model(),D=analytics(M,range(M));saveCsv('ربح-المبيعات.csv',[['التاريخ','الكود','الصنف','الكمية','الإيراد','تكلفة الوحدة','تكلفة المباع','الربح','الهامش','الدفع','العميل','حالة التكلفة'],...D.lines.map(l=>[l.s.date,l.s.code,itemName(M,l.s.code),l.s.qty,l.s.total,l.uc,l.cogs,l.prof,l.s.total?l.prof/l.s.total:'',l.s.pay||'غير محدد',l.s.cust||'',l.nocost?'بدون تكلفة مسجلة':'مكتمل'])])},
   'exp-items':()=>{const M=model(),D=reportData(M,range(M));saveCsv('ربحية-الأصناف.csv',[['الكود','الصنف','الكمية','المبيعات','التكلفة','الربح'],...D.it.map(x=>[x.code,x.n,x.q,x.t,x.c,x.t-x.c])])},
   'exp-sales':()=>{const M=model(),R=range(M);saveCsv('المبيعات.csv',[['التاريخ','الفاتورة','الكود','الصنف','الكمية','السعر','الإجمالي','العميل','الدفع','المُدخِل'],...M.sales.filter(s=>R.inr(s.date)).map(s=>[s.date,s.inv,s.code,itemName(M,s.code),s.qty,s.price,s.total,s.cust,s.pay,who(s.by)])])},
   imptype:e=>{ui.imp={type:e.dataset.v,rows:[],errs:[],fname:'',text:''};render()},
@@ -608,6 +728,7 @@ function onInput(ev){
   }
   if(t.dataset.ui){ui[t.dataset.ui]=t.value;if(t.dataset.ui==='from'||t.dataset.ui==='to')ui.preset='custom';
     if(ev.type==='change'||t.dataset.ui==='sq'||t.dataset.ui==='q'){const id=t.id,v=t.value;render();const n=$('#'+id);if(n&&t.type==='search'){n.focus();try{n.setSelectionRange(v.length,v.length)}catch(e){}}}}
+  if(t.dataset.an){AN[t.dataset.an]=Math.max(0,+t.value||0);try{localStorage.setItem('mz_an',JSON.stringify(AN))}catch(e){}if(ev.type==='change')render()}
   if(t.dataset.e&&ui.edit){ui.edit[t.dataset.e]=t.value}
   if(t.dataset.imp==='file'&&ev.type==='change'&&t.files&&t.files[0]){if(!ui.imp)ui.imp={type:'items',rows:[],errs:[],fname:'',text:''};loadImportFile(t.files[0])}
   if(t.dataset.imp==='text'){(ui.imp||(ui.imp={type:'items',rows:[],errs:[],fname:'',text:''})).text=t.value}
