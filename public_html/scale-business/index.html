@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B6B5D">
+<title>Scale Business</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Scale Business: نظام محاسبة يومية عربي للمطاعم والمقاهي والمحلات — مبيعات ومشتريات ومخزون ووصفات وآجل ونقطة بيع. جرّب ٧ أيام مجاناً.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B6B5D'/%3E%3Crect x='7' y='17' width='4.6' height='8' rx='1.6' fill='white' opacity='.55'/%3E%3Crect x='13.7' y='12' width='4.6' height='13' rx='1.6' fill='white' opacity='.8'/%3E%3Crect x='20.4' y='6.5' width='4.6' height='18.5' rx='1.6' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#F3F6F5;--surface:#FFFFFF;--surface-2:#EAF0EE;--ink:#13211F;--muted:#55676409;--line:#D5DEDC;--accent:#0B6B5D;--accent-ink:#FFFFFF;--accent-soft:#D9EEE9;--good:#17794A;--good-soft:#D8F0E3;--warn:#9A5608;--warn-soft:#FBEBD3;--shadow:0 1px 2px rgba(19,33,31,.06),0 10px 30px rgba(19,33,31,.07);--font:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif}
+:root{--muted:#566865}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1312;--surface:#141F1D;--surface-2:#1A2826;--ink:#E6F0EE;--muted:#93A8A4;--line:#27373A;--accent:#3DBBA4;--accent-ink:#06211C;--accent-soft:#17352F;--good:#59C58C;--good-soft:#143324;--warn:#E0A04A;--warn-soft:#3A2A12;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0C1312;--surface:#141F1D;--surface-2:#1A2826;--ink:#E6F0EE;--muted:#93A8A4;--line:#27373A;--accent:#3DBBA4;--accent-ink:#06211C;--accent-soft:#17352F;--good:#59C58C;--good-soft:#143324;--warn:#E0A04A;--warn-soft:#3A2A12;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.7;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+.c{max-width:1120px;margin-inline:auto}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;display:inline-block}
+.lg{width:30px;height:30px;flex:none}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:.01em;direction:ltr;white-space:nowrap}
+@media(max-width:420px){.brand{font-size:17px;gap:8px}.lg{width:26px;height:26px}.hd .c{gap:10px}.btn{padding:9px 14px}}
+/* header */
+.hd{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.hd .c{display:flex;align-items:center;gap:20px;min-height:64px}
+.nav{display:flex;gap:22px;margin-inline-start:12px;color:var(--muted);font-weight:500;font-size:15px}
+.nav a:hover{color:var(--ink)}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:10px 18px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.lgb{padding:14px 26px;font-size:17px;border-radius:12px}
+@media(max-width:820px){.nav{display:none}.hd .btn.ghost{display:none}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+/* hero */
+.hero{display:grid;gap:40px;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:center;padding-block:72px 40px}
+@media(max-width:900px){.hero{grid-template-columns:1fr;padding-block:36px 24px}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);color:var(--accent);padding:4px 14px;border-radius:999px;font-size:14px;font-weight:700}
+h1{font-size:clamp(32px,5.2vw,54px);line-height:1.22;margin:16px 0 14px;font-weight:800;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lead{font-size:18px;color:var(--muted);max-width:56ch;margin:0 0 24px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.tags span{font-size:13.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 12px;background:var(--surface)}
+.note{margin-top:14px;font-size:14px;color:var(--muted)}
+/* mock dashboard */
+.mock{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.mock .top{display:flex;align-items:center;gap:8px;font-weight:700}
+.mock .top small{color:var(--muted);font-weight:500}
+.dots{display:flex;gap:5px;margin-inline-start:auto;direction:ltr}.dots i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.k3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.k{background:var(--surface-2);border-radius:12px;padding:10px 12px;min-width:0}
+.k .l{font-size:12.5px;color:var(--muted)}.k .v{font-size:20px;font-weight:800;line-height:1.3}
+.k.m{background:var(--accent);color:var(--accent-ink)}.k.m .l{color:inherit;opacity:.85}
+.bars{display:flex;align-items:flex-end;gap:8px;height:110px;padding-top:6px;direction:ltr}
+.bars i{flex:1;background:var(--accent-soft);border-radius:6px 6px 2px 2px;min-width:0}
+.bars i:nth-child(n+5){background:var(--accent)}
+.rows{display:flex;flex-direction:column;font-size:14px}
+.rows div{display:flex;justify-content:space-between;gap:10px;padding-block:7px;border-top:1px solid var(--line)}
+.rows b{font-weight:600}.rows span{color:var(--muted)}
+.demo{font-size:12px;color:var(--muted);text-align:center}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;padding-block:16px 8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.stat b{display:block;font-size:30px;line-height:1.2;color:var(--accent);font-weight:800}
+.stat span{color:var(--muted);font-size:14.5px}
+/* sections */
+section{padding-block:72px 8px}
+.sh{max-width:680px;margin-bottom:32px}
+.sh .eyebrow{margin-bottom:10px}
+h2{font-size:clamp(26px,3.6vw,38px);line-height:1.3;margin:0 0 10px;font-weight:800;text-wrap:balance}
+.sh p{margin:0;color:var(--muted);font-size:17px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;min-width:0;transition:transform .15s,border-color .15s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card h3{margin:14px 0 6px;font-size:18px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.ic{width:26px;height:26px;color:var(--accent)}
+.ib{width:48px;height:48px;border-radius:12px;background:var(--accent-soft);display:grid;place-items:center}
+/* sellers */
+.two{display:grid;gap:36px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center}
+@media(max-width:900px){.two{grid-template-columns:1fr}}
+.ul{list-style:none;margin:18px 0 24px;padding:0;display:flex;flex-direction:column;gap:12px}
+.ul li{display:flex;gap:10px;align-items:flex-start}
+.ul li::before{content:"";flex:none;width:22px;height:22px;margin-top:3px;border-radius:50%;background:var(--accent-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230B6B5D' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/14px no-repeat}
+.roles{display:flex;flex-direction:column;gap:12px}
+.role{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;min-width:0}
+.role.own{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800;flex:none}
+.role .t{font-weight:700}.role .s{font-size:13.5px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-inline-start:auto}
+.chip{font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--good-soft);color:var(--good);white-space:nowrap}
+.chip.no{background:var(--surface-2);color:var(--muted)}
+@media(max-width:520px){.role{flex-wrap:wrap}.chips{margin-inline-start:0}}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;counter-reset:s}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;position:relative}
+.step::before{counter-increment:s;content:counter(s,arabic-indic);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;margin-bottom:14px}
+.step h3{margin:0 0 6px;font-size:18px}.step p{margin:0;color:var(--muted);font-size:15px}
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:16px;align-items:stretch}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:6px;min-width:0;position:relative}
+.plan.best{border:2px solid var(--accent);box-shadow:var(--shadow)}
+.badge{align-self:flex-start;font-size:12.5px;font-weight:700;background:var(--accent-soft);color:var(--accent);padding:2px 12px;border-radius:999px}
+.plan.best .badge{background:var(--accent);color:var(--accent-ink)}
+.plan h3{margin:8px 0 0;font-size:19px}
+.price{font-size:40px;font-weight:800;line-height:1.2}.price small{font-size:16px;font-weight:600;color:var(--muted)}
+.per{font-size:14px;color:var(--muted);min-height:23px}
+.plan ul{list-style:none;padding:0;margin:14px 0 18px;display:flex;flex-direction:column;gap:8px;font-size:14.5px;flex:1}
+.plan li{display:flex;gap:8px}.plan li::before{content:"✓";color:var(--accent);font-weight:800}
+.plan .btn{width:100%}
+.pnote{margin-top:16px;color:var(--muted);font-size:14.5px;text-align:center}
+/* faq */
+.faq{max-width:820px;display:flex;flex-direction:column;gap:10px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 18px}
+summary{cursor:pointer;font-weight:700;padding-block:14px;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:22px;color:var(--accent);line-height:1}
+details[open] summary::after{content:"−"}
+details p{margin:0 0 16px;color:var(--muted)}
+/* final */
+.final{margin-top:72px;background:var(--accent);color:var(--accent-ink);border-radius:24px;padding:clamp(28px,5vw,56px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.final h2{margin:0}.final p{margin:0;opacity:.9}
+.final .btn{background:var(--accent-ink);color:var(--accent);border-color:var(--accent-ink)}
+/* footer */
+footer{padding-block:48px 36px;margin-top:40px;border-top:1px solid var(--line)}
+.fg{display:grid;gap:28px;grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,1fr))}
+@media(max-width:700px){.fg{grid-template-columns:1fr 1fr}.fg>:first-child{grid-column:1/-1}}
+footer p{color:var(--muted);font-size:14.5px;margin:10px 0 0;max-width:42ch}
+footer h4{margin:0 0 10px;font-size:15px}
+footer ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;color:var(--muted);font-size:14.5px}
+footer ul a:hover{color:var(--accent)}
+.copy{margin-top:28px;color:var(--muted);font-size:13.5px;text-align:center}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.card{transition:none}}
+
+/* =====================================================================
+   Modern layer — AI-era look: aurora backdrop, glass surfaces, gradient accents
+   ===================================================================== */
+:root{
+  --bg:#F2F5FB; --surface:#FFFFFF; --surface-2:#EDF1F9; --ink:#0E1630; --muted:#586280; --line:#E0E6F2;
+  --accent:#0A8573; --accent-ink:#FFFFFF; --accent-soft:#DDF3EE; --accent-2:#5B4BE0;
+  --g1:#0A8573; --g2:#2563EB; --g3:#6D4BEA;
+  --grad:linear-gradient(135deg,var(--g1) 0%,var(--g2) 58%,var(--g3) 100%);
+  --glow:0 8px 28px rgba(37,99,235,.28);
+  --warn:#9A5608; --warn-soft:#FFF0D6; --bad:#BE2A37; --bad-soft:#FDE3E5; --good:#12804F; --good-soft:#D9F3E5;
+  --shadow:0 1px 2px rgba(14,22,48,.05),0 8px 28px rgba(14,22,48,.06);
+  --glass:rgba(255,255,255,.72);
+  --aurora:radial-gradient(900px 480px at 85% -10%,rgba(37,99,235,.14),transparent 60%),radial-gradient(760px 420px at 8% 0%,rgba(10,133,115,.16),transparent 60%),radial-gradient(700px 520px at 50% 110%,rgba(109,75,234,.10),transparent 60%);
+  --radius:18px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#060A14; --surface:#0D1424; --surface-2:#131C31; --ink:#E7EDFB; --muted:#8B97B3; --line:#1D2845;
+  --accent:#35D6B6; --accent-ink:#04201B; --accent-soft:rgba(53,214,182,.13); --accent-2:#8D7CFF;
+  --g1:#35D6B6; --g2:#4C9BFF; --g3:#8D7CFF;
+  --grad:linear-gradient(135deg,#35D6B6 0%,#4C9BFF 100%);
+  --glow:0 8px 30px rgba(76,155,255,.30);
+  --warn:#F0B056; --warn-soft:rgba(240,176,86,.14); --bad:#FF8D96; --bad-soft:rgba(255,141,150,.14); --good:#5FD39A; --good-soft:rgba(95,211,154,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 34px rgba(0,0,0,.35);
+  --glass:rgba(13,20,36,.62);
+  --aurora:radial-gradient(900px 480px at 85% -10%,rgba(76,155,255,.18),transparent 60%),radial-gradient(760px 420px at 8% 0%,rgba(53,214,182,.16),transparent 60%),radial-gradient(700px 520px at 50% 110%,rgba(141,124,255,.14),transparent 60%);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#060A14; --surface:#0D1424; --surface-2:#131C31; --ink:#E7EDFB; --muted:#8B97B3; --line:#1D2845;
+  --accent:#35D6B6; --accent-ink:#04201B; --accent-soft:rgba(53,214,182,.13); --accent-2:#8D7CFF;
+  --g1:#35D6B6; --g2:#4C9BFF; --g3:#8D7CFF;
+  --grad:linear-gradient(135deg,#35D6B6 0%,#4C9BFF 100%);
+  --glow:0 8px 30px rgba(76,155,255,.30);
+  --warn:#F0B056; --warn-soft:rgba(240,176,86,.14); --bad:#FF8D96; --bad-soft:rgba(255,141,150,.14); --good:#5FD39A; --good-soft:rgba(95,211,154,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 34px rgba(0,0,0,.35);
+  --glass:rgba(13,20,36,.62);
+  --aurora:radial-gradient(900px 480px at 85% -10%,rgba(76,155,255,.18),transparent 60%),radial-gradient(760px 420px at 8% 0%,rgba(53,214,182,.16),transparent 60%),radial-gradient(700px 520px at 50% 110%,rgba(141,124,255,.14),transparent 60%);
+  color-scheme:dark}
+
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--aurora)}
+body::before{background:color-mix(in srgb,var(--bg) 80%,transparent)!important}
+.lg>rect:first-child{fill:url(#mzg) var(--accent)}
+.hd{background:var(--glass);backdrop-filter:blur(16px) saturate(1.5)}
+.btn{border-radius:12px}
+.btn.pri{background:var(--grad);border-color:transparent;color:var(--accent-ink);box-shadow:var(--glow)}
+.btn.pri:hover{transform:translateY(-1px)}
+.eyebrow{background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);backdrop-filter:blur(6px)}
+.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--grad);box-shadow:0 0 10px var(--g2)}
+h1{letter-spacing:-.02em}
+h1 em{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero{position:relative}
+.hero::before{content:"";position:absolute;inset:-20px 0;z-index:-1;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 10%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 40%,#000 10%,transparent 70%);opacity:.55}
+.mock{background:var(--glass);backdrop-filter:blur(14px);border-radius:22px;box-shadow:var(--shadow),var(--glow)}
+.k.m{background:var(--grad)}
+.bars i{background:color-mix(in srgb,var(--accent) 20%,transparent)}
+.bars i:nth-child(n+5){background:var(--grad)}
+.float{position:absolute;z-index:3;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;white-space:nowrap}
+.float i{width:8px;height:8px;border-radius:50%;background:var(--grad)}
+.mockwrap{position:relative;min-width:0;padding-block:6px}
+.f1{top:-16px;inset-inline-start:-18px}.f2{bottom:34px;inset-inline-end:-14px}
+@media(max-width:900px){.f1{inset-inline-start:8px}.f2{inset-inline-end:8px}}
+.stat,.card,.step,.role,details{background:color-mix(in srgb,var(--surface) 86%,transparent);backdrop-filter:blur(8px);border-radius:18px}
+.stat b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ib{background:color-mix(in srgb,var(--accent) 13%,transparent);border-radius:14px}
+.card:hover{box-shadow:var(--shadow)}
+.step::before{background:var(--grad);color:var(--accent-ink);box-shadow:var(--glow)}
+.plan{border-radius:22px;background:color-mix(in srgb,var(--surface) 86%,transparent);backdrop-filter:blur(8px)}
+.plan.best{border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,var(--grad) border-box;box-shadow:var(--glow)}
+.plan.best .badge{background:var(--grad)}
+.price{letter-spacing:-.02em}
+.final{background:var(--grad);box-shadow:var(--glow);position:relative;overflow:hidden}
+.final::after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;inset:-120px auto auto -80px;background:radial-gradient(circle,rgba(255,255,255,.25),transparent 65%);pointer-events:none}
+.final .btn{background:var(--accent-ink);color:var(--ink);box-shadow:none}
+@media (prefers-reduced-motion:no-preference){.hero>*{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}.hero>*:nth-child(2){animation-delay:.1s}@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="mzg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--g1)"/><stop offset=".6" style="stop-color:var(--g2)"/><stop offset="1" style="stop-color:var(--g3)"/></linearGradient><linearGradient id="mzbar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--g2)"/><stop offset="1" style="stop-color:var(--g1)"/></linearGradient></defs></svg>
+<header class="hd"><div class="c">
+  <a class="brand" href="#top" aria-label="Scale Business"><svg class="lg" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><rect x="7" y="17" width="4.6" height="8" rx="1.6" fill="var(--accent-ink)" opacity=".55"/><rect x="13.7" y="12" width="4.6" height="13" rx="1.6" fill="var(--accent-ink)" opacity=".8"/><rect x="20.4" y="6.5" width="4.6" height="18.5" rx="1.6" fill="var(--accent-ink)"/></svg><span>Scale Business</span></a>
+  <nav class="nav" aria-label="التنقل"><a href="#features">المزايا</a><a href="#sellers">الفريق</a><a href="#how">كيف يعمل</a><a href="#pricing">الأسعار</a><a href="#faq">الأسئلة</a></nav>
+  <span class="sp"></span>
+  <a class="btn ghost" href="/app/">تسجيل الدخول</a>
+  <a class="btn pri" href="/app/">إنشاء حساب</a>
+</div></header>
+
+<main id="top">
+<div class="c">
+ <div class="hero">
+  <div>
+   <span class="eyebrow">نظام محاسبي عربي للمطاعم والمقاهي والمحلات</span>
+   <h1>كبّر نشاطك وأنت <em>عارف أرقامك</em> كل يوم</h1>
+   <p class="lead">Scale Business يجمع المبيعات والمشتريات والمصروفات والمخزون والآجل ونقطة البيع في مكان واحد، ويعطيك تقارير واضحة وربحاً حقيقياً لكل صنف.</p>
+   <div class="cta"><a class="btn pri lgb" href="/app/">ابدأ مجاناً الآن</a><a class="btn lgb" href="#pricing">شاهد الأسعار</a></div>
+   <div class="tags"><span>مبيعات ومشتريات</span><span>مخزون ووصفات</span><span>نقطة بيع</span><span>تقارير يومية</span></div>
+   <p class="note">تجربة ٧ أيام كاملة — دون بطاقة دفع.</p>
+  </div>
+  <div class="mockwrap"><span class="float f1"><i></i>متوسط التكلفة يتحدّث تلقائياً</span><span class="float f2"><i></i>تنبيه: رصيد البن منخفض</span><div class="mock" role="img" aria-label="مثال على لوحة التحكم">
+   <div class="top"><span>لوحة التحكم</span><small>اليوم</small><span class="dots"><i></i><i></i><i></i></span></div>
+   <div class="k3"><div class="k m"><div class="l">المبيعات</div><div class="v"><span class="num">12,480</span></div></div><div class="k"><div class="l">المشتريات</div><div class="v"><span class="num">5,230</span></div></div><div class="k"><div class="l">صافي الحركة</div><div class="v"><span class="num">4,910</span></div></div></div>
+   <div class="bars" aria-hidden="true"><i style="height:38%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:66%"></i><i style="height:58%"></i><i style="height:82%"></i><i style="height:100%"></i></div>
+   <div class="rows"><div><b>كابتشينو × ٢</b><span class="num">130</span></div><div><b>لاتيه</b><span class="num">70</span></div><div><b>مياه معدنية × ٣</b><span class="num">45</span></div></div>
+   <div class="demo">بيانات توضيحية</div>
+  </div></div>
+ </div>
+ <div class="stats">
+  <div class="stat"><b>٨</b><span>وحدات إدارة متكاملة</span></div>
+  <div class="stat"><b>٧ أيام</b><span>تجربة مجانية كاملة</span></div>
+  <div class="stat"><b>٢٩٩ ج.م</b><span>سعر الخطة الشهرية</span></div>
+  <div class="stat"><b>١٠</b><span>حسابات كاشير لكل نشاط</span></div>
+ </div>
+</div>
+
+<div class="c"><section id="features">
+ <div class="sh"><span class="eyebrow">المزايا</span><h2>كل ما يحتاجه نشاطك في مكان واحد</h2><p>بدل الجداول المتفرقة والدفاتر: نظام واحد يربط البيع بالمخزون بالتكلفة بالأرباح.</p></div>
+ <div class="grid4"><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div><h3>نقطة بيع سريعة</h3><p>شاشة لمس للكاشير: اختر الأصناف، حدّد طريقة الدفع، واطبع الفاتورة. يُخصم المخزون تلقائياً.</p></article><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></div><h3>المبيعات والآجل</h3><p>سجّل البيع نقداً أو بطاقة أو تحويلاً أو آجلاً باسم العميل، مع كشف حساب وسداد لكل عميل.</p></article><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7M12 11v10"/></svg></div><h3>المشتريات والخامات</h3><p>فواتير الموردين بالكمية والإجمالي، وتحديث متوسط تكلفة الشراء تلقائياً مع دعم عبوات الشراء.</p></article><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 13h2M3 10h18"/></svg></div><h3>المصروفات والتدفق النقدي</h3><p>صنّف مصروفاتك وتابع صافي النقدية اليومي بعد المبيعات والسداد والمشتريات المدفوعة.</p></article><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></svg></div><h3>مخزون ووصفات</h3><p>رصيد حي للخامات والمنتجات، تنبيه حد أدنى، ووصفات تحسب تكلفة كل صنف وهامش ربحه الفعلي.</p></article><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .7 3 2.6 3 6"/></svg></div><h3>فريق من الكاشير</h3><p>حساب لكل موظف بصلاحية البيع فقط، ومبيعاته تظهر فوراً عندك بالاسم والوقت.</p></article><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></div><h3>لوحة تحكم وتقارير</h3><p>مبيعات ومصروفات وأرباح الأصناف وملخص كل يوم، مع تصدير الجداول إلى Excel.</p></article><article class="card"><div class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div><h3>استيراد من Excel</h3><p>انقل أصنافك وخامات مخزونك وفواتير المشتريات من ملفات Excel أو CSV بدل الإدخال اليدوي.</p></article></div>
+</section></div>
+
+<div class="c"><section id="sellers"><div class="two">
+ <div>
+  <span class="eyebrow">فريق العمل</span>
+  <h2>حساب واحد للنشاط، وعدة كاشير يعملون معك</h2>
+  <ul class="ul"><li>لكل موظف اسم مستخدم وكلمة مرور خاصة به، من هاتفه أو من الكاشير.</li><li>الموظف يرى شاشة البيع فقط، ولا يرى المشتريات أو المصروفات أو الأرباح — والخادم نفسه يمنعه، لا الواجهة فقط.</li><li>تضيف الموظفين وتوقفهم وتغيّر كلمات مرورهم من لوحتك.</li><li>كل بيع يظهر عندك فوراً في المبيعات والمخزون باسم البائع.</li></ul>
+  <a class="btn pri" href="/app/">ابدأ وأضف فريقك</a>
+ </div>
+ <div class="roles" aria-label="الصلاحيات">
+  <div class="role own"><span class="av">م</span><div><div class="t">المالك</div><div class="s">كل الأقسام والتقارير</div></div><span class="chips"><span class="chip">المبيعات</span><span class="chip">الأرباح</span><span class="chip">الفريق</span></span></div>
+  <div class="role"><span class="av">ك١</span><div><div class="t">كاشير ١</div><div class="s">شاشة البيع فقط</div></div><span class="chips"><span class="chip">البيع</span><span class="chip no">الأرباح</span></span></div>
+  <div class="role"><span class="av">ك٢</span><div><div class="t">كاشير ٢</div><div class="s">شاشة البيع فقط</div></div><span class="chips"><span class="chip">البيع</span><span class="chip no">المشتريات</span></span></div>
+ </div>
+</div></section></div>
+
+<div class="c"><section id="how">
+ <div class="sh"><span class="eyebrow">كيف يعمل</span><h2>ابدأ في ثلاث خطوات</h2></div>
+ <div class="steps">
+  <div class="step"><h3>أنشئ حساب نشاطك</h3><p>بالبريد وكلمة مرور فقط. تبدأ التجربة المجانية فوراً دون بطاقة دفع.</p></div>
+  <div class="step"><h3>أضف أصنافك ومخزونك</h3><p>أدخلها يدوياً أو استوردها من Excel، وأضف الخامات والوصفات إن أردت حساب التكلفة.</p></div>
+  <div class="step"><h3>بِع وتابع واربح</h3><p>سجّل المبيعات والمشتريات والمصروفات، وراجع ملخص يومك وأرباح أصنافك.</p></div>
+ </div>
+</section></div>
+
+<div class="c"><section id="pricing">
+ <div class="sh"><span class="eyebrow">الأسعار</span><h2>خطط مرنة تنمو مع نشاطك</h2><p>كل الخطط تشمل كل المزايا، وكلما طالت المدة وفّرت أكثر. الأسعار بالجنيه المصري.</p></div>
+ <div class="plans"><div class="plan"><span class="badge">الأكثر مرونة</span><h3>شهري</h3><div class="price"><span class="num">299</span> <small>ج.م</small></div><div class="per">تُجدَّد شهرياً</div><ul><li>كل المزايا في كل الخطط</li><li>مبيعات ومشتريات ومصروفات وآجل</li><li>مخزون ووصفات ونقطة بيع</li><li>ملخص يومي وتقارير وتصدير Excel</li><li>حتى ١٠ حسابات كاشير لكل نشاط</li><li>نسخة احتياطية كاملة بضغطة واحدة</li></ul><a class="btn" href="/app/">ابدأ الآن</a></div><div class="plan"><span class="badge">وفّر ٥٪</span><h3>ربع سنوي</h3><div class="price"><span class="num">849</span> <small>ج.م</small></div><div class="per">≈ <span class=num>283</span> ج.م / شهر</div><ul><li>كل المزايا في كل الخطط</li><li>مبيعات ومشتريات ومصروفات وآجل</li><li>مخزون ووصفات ونقطة بيع</li><li>ملخص يومي وتقارير وتصدير Excel</li><li>حتى ١٠ حسابات كاشير لكل نشاط</li><li>نسخة احتياطية كاملة بضغطة واحدة</li></ul><a class="btn" href="/app/">ابدأ الآن</a></div><div class="plan"><span class="badge">وفّر ١١٪</span><h3>نصف سنوي</h3><div class="price"><span class="num">1,599</span> <small>ج.م</small></div><div class="per">≈ <span class=num>266.5</span> ج.م / شهر</div><ul><li>كل المزايا في كل الخطط</li><li>مبيعات ومشتريات ومصروفات وآجل</li><li>مخزون ووصفات ونقطة بيع</li><li>ملخص يومي وتقارير وتصدير Excel</li><li>حتى ١٠ حسابات كاشير لكل نشاط</li><li>نسخة احتياطية كاملة بضغطة واحدة</li></ul><a class="btn" href="/app/">ابدأ الآن</a></div><div class="plan best"><span class="badge">الأفضل قيمة</span><h3>سنوي</h3><div class="price"><span class="num">2,999</span> <small>ج.م</small></div><div class="per">≈ <span class=num>249.92</span> ج.م / شهر</div><ul><li>كل المزايا في كل الخطط</li><li>مبيعات ومشتريات ومصروفات وآجل</li><li>مخزون ووصفات ونقطة بيع</li><li>ملخص يومي وتقارير وتصدير Excel</li><li>حتى ١٠ حسابات كاشير لكل نشاط</li><li>نسخة احتياطية كاملة بضغطة واحدة</li></ul><a class="btn pri" href="/app/">ابدأ الآن</a></div></div>
+ <p class="pnote">تجربة ٧ أيام على كل خطة، والتجديد المبكر يُضاف فوق الأيام المتبقية.</p>
+</section></div>
+
+<div class="c"><section id="faq">
+ <div class="sh"><span class="eyebrow">الأسئلة الشائعة</span><h2>إجابات سريعة قبل أن تبدأ</h2></div>
+ <div class="faq"><details><summary>هل أحتاج بطاقة دفع لبدء التجربة؟</summary><p>لا. تنشئ حسابك وتجرّب النظام كاملاً لمدة ٧ أيام دون إدخال أي بيانات دفع.</p></details><details><summary>ماذا يحدث عند انتهاء التجربة أو الاشتراك؟</summary><p>يتوقف الإدخال حتى تجدّد، لكن بياناتك تبقى محفوظة ويمكنك عرضها وتنزيل نسخة كاملة منها في أي وقت. وبمجرد الاشتراك يعود كل شيء كما كان.</p></details><details><summary>كيف أدفع؟</summary><p>بالبطاقة عبر بوابة Paymob الآمنة. لا نحتفظ ببيانات بطاقتك، ويُفعَّل اشتراكك تلقائياً بعد نجاح الدفع.</p></details><details><summary>إن جدّدت قبل انتهاء المدة، هل أخسر الأيام المتبقية؟</summary><p>لا. المدة الجديدة تُضاف فوق الأيام المتبقية في اشتراكك.</p></details><details><summary>كم موظفاً يمكنني إضافته؟</summary><p>حتى ١٠ حسابات كاشير لكل نشاط. الموظف يرى شاشة البيع فقط ولا يرى المشتريات أو الأرباح.</p></details><details><summary>هل بياناتي منفصلة عن بقية العملاء؟</summary><p>نعم. بيانات كل نشاط معزولة تماماً، ولا يصل إليها إلا مالك النشاط وموظفوه بحدود صلاحياتهم.</p></details><details><summary>عندي بياناتي في Excel، هل أستطيع نقلها؟</summary><p>نعم. يمكنك استيراد الأصناف والخامات وفواتير المشتريات من ملفات Excel أو CSV.</p></details></div>
+</section></div>
+
+<div class="c"><div class="final">
+ <h2>جاهز تنظّم أعمالك وتربح أكثر؟</h2>
+ <p>أنشئ حسابك وابدأ تجربتك الكاملة لمدة ٧ أيام — دون بطاقة دفع.</p>
+ <a class="btn lgb" href="/app/">أنشئ حسابك المجاني</a>
+</div></div>
+</main>
+
+<footer><div class="c">
+ <div class="fg">
+  <div><a class="brand" href="#top"><svg class="lg" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><rect x="7" y="17" width="4.6" height="8" rx="1.6" fill="var(--accent-ink)" opacity=".55"/><rect x="13.7" y="12" width="4.6" height="13" rx="1.6" fill="var(--accent-ink)" opacity=".8"/><rect x="20.4" y="6.5" width="4.6" height="18.5" rx="1.6" fill="var(--accent-ink)"/></svg><span>Scale Business</span></a><p>نظام محاسبة يومية عربي لأصحاب الأعمال: مبيعات ومخزون وأرباح في مكان واحد.</p></div>
+  <div><h4>المنتج</h4><ul><li><a href="#features">المزايا</a></li><li><a href="#sellers">الفريق</a></li><li><a href="#pricing">الأسعار</a></li><li><a href="#faq">الأسئلة الشائعة</a></li></ul></div>
+  <div><h4>الحساب</h4><ul><li><a href="/app/">تسجيل الدخول</a></li><li><a href="/app/">إنشاء حساب</a></li></ul></div>
+ </div>
+ <div class="copy"><span dir="ltr">© 2026 Scale Business</span></div>
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Scale Business — لوحة الإدارة</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B6B5D'/%3E%3Crect x='7' y='17' width='4.6' height='8' rx='1.6' fill='white' opacity='.55'/%3E%3Crect x='13.7' y='12' width='4.6' height='13' rx='1.6' fill='white' opacity='.8'/%3E%3Crect x='20.4' y='6.5' width='4.6' height='18.5' rx='1.6' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="app.css?v=2">
+<script>try{var t=localStorage.getItem('mz_theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="mzg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--g1)"/><stop offset=".6" style="stop-color:var(--g2)"/><stop offset="1" style="stop-color:var(--g3)"/></linearGradient><linearGradient id="mzbar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--g2)"/><stop offset="1" style="stop-color:var(--g1)"/></linearGradient></defs></svg>
+<div id="root" class="wrap" style="padding-top:24px"><div class="load">جارٍ التحميل…</div></div>
+<div id="toast" class="toast" hidden></div>
+<script>
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  const fd = (t) => (t ? new Date(t * 1000).toLocaleDateString('ar-EG') : '—');
+  const ST = { trial: ['تجربة', 'warn'], active: ['نشط', 'good'], expired: ['منتهي', 'bad'], suspended: ['موقوف', 'bad'] };
+  let T = [], stats = {}, pays = [], view = 'tenants', q = '';
+  function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 3000); }
+  async function api(method, route, body) {
+    const r = await fetch('/api/' + route, { method, credentials: 'same-origin', headers: { 'X-Requested-With': 'mezzan', 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+    let j = {}; try { j = await r.json(); } catch (e) {}
+    if (!r.ok) { const e = new Error(j.message || 'خطأ'); e.status = r.status; throw e; }
+    return j;
+  }
+  function login(msg) {
+    $('#root').innerHTML = '<div class="card authcard" style="max-width:380px;margin:60px auto"><h2>لوحة إدارة Scale Business</h2><form id="lf" class="list"><div class="field"><label>البريد</label><input name="login" dir="ltr" required></div><div class="field"><label>كلمة المرور</label><input name="password" type="password" dir="ltr" required></div><button class="btn pri">دخول</button></form>' + (msg ? '<div class="alert bad">' + esc(msg) + '</div>' : '') + '</div>';
+    $('#lf').onsubmit = async (e) => {
+      e.preventDefault();
+      try { const me = await api('POST', 'auth/login', Object.fromEntries(new FormData(e.target))); if (me.user.role !== 'admin') { await api('POST', 'auth/logout', {}); return login('هذا الحساب ليس حساب إدارة.'); } load(); }
+      catch (er) { login(er.message); }
+    };
+  }
+  async function load() {
+    try {
+      const d = await api('GET', 'admin/tenants'); T = d.tenants; stats = d.stats;
+      pays = (await api('GET', 'admin/payments')).payments;
+      draw();
+    } catch (e) { login(); }
+  }
+  function draw() {
+    const list = T.filter((t) => !q || (t.name + ' ' + (t.owner_email || '') + ' ' + (t.owner_name || '')).toLowerCase().includes(q.toLowerCase()));
+    $('#root').innerHTML = '<header class="top" style="position:static;margin:0 0 16px;padding-inline:0;background:none;border:0"><div class="bar"><div class="brand"><svg class="lg" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><rect x="7" y="17" width="4.6" height="8" rx="1.6" fill="var(--accent-ink)" opacity=".55"/><rect x="13.7" y="12" width="4.6" height="13" rx="1.6" fill="var(--accent-ink)" opacity=".8"/><rect x="20.4" y="6.5" width="4.6" height="18.5" rx="1.6" fill="var(--accent-ink)"/></svg><span>Scale Business</span> <small>لوحة الإدارة</small></div><span class="sp"></span><div class="seg"><button data-v="tenants" aria-pressed="' + (view === 'tenants') + '">العملاء</button><button data-v="pays" aria-pressed="' + (view === 'pays') + '">المدفوعات</button></div><button class="btn sm" id="lo">خروج</button></div></header>' +
+      '<div class="kpis"><div class="kpi"><div class="l">إجمالي العملاء</div><div class="v">' + stats.tenants + '</div></div><div class="kpi"><div class="l">اشتراكات نشطة</div><div class="v">' + stats.active + '</div></div><div class="kpi"><div class="l">في التجربة</div><div class="v">' + stats.trial + '</div></div><div class="kpi main"><div class="l">إجمالي الإيرادات</div><div class="v">' + fmt(stats.revenue_cents / 100) + ' ج.م</div></div></div>' +
+      (view === 'tenants' ?
+        '<div class="card" style="margin-top:16px"><header><h3>العملاء</h3><span class="sp"></span><input id="q" type="search" placeholder="بحث بالاسم أو البريد" value="' + esc(q) + '" style="max-width:240px"></header><div class="tbl"><table><thead><tr><th>النشاط</th><th>المالك</th><th>الحالة</th><th>ينتهي</th><th class="n">موظفون</th><th>تسجيل</th><th>إجراءات</th></tr></thead><tbody>' +
+        list.map((t) => { const s = ST[t.access.state]; return '<tr><td><b>' + esc(t.name) + '</b></td><td>' + esc(t.owner_name || '') + '<div class="muted sm" dir="ltr" style="text-align:right">' + esc(t.owner_email || '') + '</div></td><td><span class="chip ' + s[1] + '">' + s[0] + '</span>' + (t.plan ? ' <span class="muted sm">' + esc(t.plan) + '</span>' : '') + '</td><td>' + fd(t.access.ends_at) + '</td><td class="n">' + t.sellers + '</td><td>' + fd(t.created_at) + '</td>' +
+          '<td style="white-space:nowrap"><button class="btn sm" data-a="activate" data-id="' + t.id + '">تفعيل شهور</button> <button class="btn sm" data-a="extend_trial" data-id="' + t.id + '">+ تجربة</button> ' + (t.status === 'suspended' ? '<button class="btn sm" data-a="unsuspend" data-id="' + t.id + '">رفع الإيقاف</button>' : '<button class="btn sm bad" data-a="suspend" data-id="' + t.id + '">إيقاف</button>') + '</td></tr>'; }).join('') + '</tbody></table></div></div>'
+        :
+        '<div class="card" style="margin-top:16px"><header><h3>آخر المدفوعات</h3></header><div class="tbl"><table><thead><tr><th>التاريخ</th><th>العميل</th><th>الخطة</th><th class="n">المبلغ</th><th>الحالة</th><th>مرجع</th></tr></thead><tbody>' +
+        pays.map((p) => '<tr><td>' + fd(p.paid_at || p.created_at) + '</td><td>' + esc(p.tenant_name) + '</td><td>' + esc(p.plan) + '</td><td class="n">' + fmt(p.amount_cents / 100) + '</td><td>' + esc(p.status) + '</td><td class="muted sm" dir="ltr">' + esc(p.reference) + (p.note ? ' · ' + esc(p.note) : '') + '</td></tr>').join('') + '</tbody></table></div></div>');
+    $('#lo').onclick = async () => { await api('POST', 'auth/logout', {}); location.reload(); };
+    document.querySelectorAll('.seg [data-v]').forEach((b) => (b.onclick = () => { view = b.dataset.v; draw(); }));
+    const qi = $('#q'); if (qi) qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; draw(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); };
+    document.querySelectorAll('[data-a]').forEach((b) => (b.onclick = async () => {
+      const a = b.dataset.a, id = +b.dataset.id, body = { id, action: a };
+      if (a === 'activate') {
+        const m = prompt('عدد الشهور للتفعيل (مثال 1 أو 12):', '1'); if (!m) return; body.months = +m;
+        const amt = prompt('المبلغ المحصّل بالجنيه (للسجل):', '0'); body.amount = +amt || 0; body.note = prompt('ملاحظة (اختياري):', 'تحويل/كاش') || '';
+      } else if (a === 'extend_trial') { const d = prompt('عدد أيام التمديد:', '7'); if (!d) return; body.days = +d; }
+      else if (a === 'suspend' && !confirm('إيقاف هذا الحساب؟')) return;
+      try { await api('POST', 'admin/tenant', body); toast('تم'); load(); } catch (e) { toast(e.message); }
+    }));
+  }
+  load();
+})();
+</script>
+</body>
+</html>
